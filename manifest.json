@@ -1,0 +1,9 @@
+{
+  "id": "mycelium",
+  "name": "Mycelium",
+  "description": "A second brain intended to grow into a large knowledge base that constantly refines itself, exposes weaknesses, discovers hidden connections, and strengthens ideas over time.",
+  "author": "Judah Oyedele",
+  "main": "main.js",
+  "minAppVersion": "0.11.0",
+  "version": "0.0.1"
+}

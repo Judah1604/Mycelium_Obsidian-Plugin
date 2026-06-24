@@ -1,0 +1,21 @@
+{
+  "name": "mycelium",
+  "version": "0.0.1",
+  "description": "A second brain intended to grow into a large knowledge base that constantly refines itself, exposes weaknesses, discovers hidden connections, and strengthens ideas over time.",
+  "main": "lib/main.js",
+  "license": "MIT",
+  "scripts": {
+    "dev": "node esbuild.config.mjs",
+    "build": "node esbuild.config.mjs --prod"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.1",
+    "obsidian": "obsidianmd/obsidian-api",
+    "obsidian-plugin-cli": "^0.4.3",
+    "typescript": "^4.1.5"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "groq-sdk": "^1.3.0"
+  }
+}

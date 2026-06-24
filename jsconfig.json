@@ -1,0 +1,6 @@
+{
+  "include": ["src/main.js"],
+  "compilerOptions": {
+    "checkJs": false
+  }
+}
