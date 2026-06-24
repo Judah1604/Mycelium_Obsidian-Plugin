@@ -18,7 +18,8 @@ export async function compareNotes(
   let relatedAnalyses = "";
 
   for (const note of relatedNotes) {
-    const analysisPath = `mycelium/analyses/${note.file.basename}.json`;
+    const fileName = note.file.basename
+    const analysisPath = `Mycelium/${fileName}/analyses/${fileName}_analysis.json`;
 
     try {
       const analysisContent = await app.vault.adapter.read(analysisPath);

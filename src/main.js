@@ -34,7 +34,6 @@ export default class Mycelium extends Plugin {
       id: "mycelium-compare-note",
       name: "Compare Note",
       callback: async () => {
-        q;
         await compareNote(this.app, this.settings.apiKey);
       },
     });

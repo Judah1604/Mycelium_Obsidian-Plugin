@@ -12,8 +12,7 @@ export async function analyzeNote(app, apiKey, file) {
   const fileName = file.name;
   const fileContent = app.vault.read(file)
 
-  console.log(file);
-  const analysis = getAnalysis(file, fileName, apiKey, app);
+  const analysis = await getAnalysis(file, fileName, apiKey, app);
 
   if (!analysis) {
     new Notice("Analysis failed.");

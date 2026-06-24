@@ -3,27 +3,26 @@ import { extractJson } from "./extractJson.js";
 export async function writeReport(subjectFile, report, reportType, app) {
   const safeName = subjectFile.replace(".md", "").replace(/[<>:"/\\|?*]/g, "_");
   const backlink = `[[${subjectFile.replace(".md", "")}]]`;
-  const analysisData = extractJson(report);
-  const mdPath = "";
-  const jsonPath = "";
+  const data = extractJson(report);
+  const analysisFolder = `Mycelium/${safeName}/analyses`;
+  const comparisonFolder = `Mycelium/${safeName}/comparison/`;
+  let mdPath = "";
+  let jsonPath = "";
 
   if (reportType == "analysis") {
-    if (!(await app.vault.adapter.exists("Mycelium/analyses/"))) {
-      await app.vault.createFolder("Mycelium/analyses/");
+    if (!(await app.vault.adapter.exists(analysisFolder))) {
+      await app.vault.createFolder(analysisFolder);
     }
-    const mdPath = `Mycelium/analyses/${safeName}/${safeName}.md`;
-    const jsonPath = `Mycelium/analyses/${safeName}/${safeName}.json`;
+    mdPath = `${analysisFolder}/${safeName}_analysis.md`;
+    jsonPath = `${analysisFolder}/${safeName}_analysis.json`;
   } else if (reportType == "comparison") {
-    if (!(await app.vault.adapter.exists("Mycelium/comparison/"))) {
-      await app.vault.createFolder("Mycelium/comparison/");
+    if (!(await app.vault.adapter.exists(comparisonFolder))) {
+      await app.vault.createFolder(comparisonFolder);
     }
-    const mdPath = `Mycelium/comparisons/${safeName}/${safeName}.md`;
-    const jsonPath = `Mycelium/comparisons/${safeName}/${safeName}.json`;
+    mdPath = `${comparisonFolder}/${safeName}/${safeName}_comparison.md`;
+    jsonPath = `${comparisonFolder}/${safeName}/${safeName}_comparison.json`;
   }
 
   await app.vault.adapter.write(mdPath, report);
-  await app.vault.adapter.write(
-    jsonPath,
-    JSON.stringify(analysisData, null, 2),
-  );
+  await app.vault.adapter.write(jsonPath, JSON.stringify(data, null, 2));
 }
