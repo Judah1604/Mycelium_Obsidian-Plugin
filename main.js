@@ -58,7 +58,8 @@ async function askLLM(prompt, apiKey2) {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
+        model: "openai/gpt-oss-120b",
+        // model: "llama-3.3-70b-versatile",
         messages: [{ role: "user", content: prompt }]
       })
     });
@@ -293,15 +294,17 @@ async function compareNote(app2, apiKey2) {
 async function buildAnalysisCache(app2, apiKey2) {
   const reportType = "analysis";
   const files = app2.vault.getMarkdownFiles().filter((file) => {
-    return !file.path.includes(`Mycelium/`) && !file.path.includes(`Miscellaneous Files/`);
+    return !file.path.includes(`Mycelium/`) && !file.path.includes(`Miscellaneous Files/`) && !file.name.includes("Untitled") && !file.name.includes("_withRevisionQuestions");
   });
+  let notAnalyzed = [];
   for (const file of files) {
-    const analysisPath = `Mycelium/analyses/${file.baseName}/${file.baseName}.md`;
+    const analysisPath = `Mycelium/${file.basename}/analyses/${file.basename}_analysis.md`;
     const exists = await app2.vault.adapter.exists(analysisPath);
-    if (exists) continue;
-    const { analysis, subjectNote } = await analyzeNote(app2, apiKey2, file);
-    await writeReport(subjectNote.name, analysis, reportType, app2);
+    if (!exists) {
+      notAnalyzed.push(file);
+    }
   }
+  console.log(notAnalyzed);
 }
 
 // src/ui/ActionSelectModal.js
