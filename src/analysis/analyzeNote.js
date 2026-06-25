@@ -10,7 +10,7 @@ export async function analyzeNote(app, apiKey, file) {
     return;
   }
   const fileName = file.name;
-  const fileContent = app.vault.read(file)
+  const fileContent = await app.vault.adapter.read(file.name);
 
   const analysis = await getAnalysis(file, fileName, apiKey, app);
 

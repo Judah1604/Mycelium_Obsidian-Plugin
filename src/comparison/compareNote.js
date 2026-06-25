@@ -9,41 +9,49 @@ import { analyzeNote } from "../analysis/analyzeNote.js";
 
 export async function compareNote(app, apiKey) {
   new Notice("Starting comparison...");
-  const analysisPath = `Mycelium/${fileName}/analyses/${fileName}_analysis.json`;
+  const activeFile = app.workspace.getActiveFile();
+
+  if (!activeFile) {
+    new Notice("No active note.");
+    return;
+  }
+
+  const fileName = activeFile.basename;
+  const analysisPath = `Mycelium/${fileName}/analyses/${fileName}_analysis.md`;
   const reportType = "comparison";
   const comparisonInject = await app.vault.adapter.read(
     app.vault.configDir + "/plugins/mycelium/src/prompts/comparison_inject.md",
   );
+  let analysisText = "";
+  const exists = await app.vault.adapter.exists(analysisPath);
 
-  if (await app.vault.adapter.exists(analysisPath)) {
-    const fileContent = await app.vault.adapter.read(analysisPath);
-    console.log(fileContent);
-    runComparison(fileContent);
+  if (exists) {
+    new Notice(`${fileName} analysis exists, using it now!`);
+    analysisText = await app.vault.adapter.read(analysisPath);
   } else {
-    const activeFile = app.workspace.getActiveFile();
-
-    if (!activeFile) {
-      new Notice("No active note.");
-      return;
-    }
-
-    const fileName = activeFile.basename;
-    const { analysis, subjectFile } = await analyzeNote(app, apiKey);
-    runComparison(analysis, subjectFile);
+    new Notice(`${fileName} analysis doesnt exist, making one now!`);
+    const { analysis } = await analyzeNote(app, apiKey, activeFile);
+    analysisText = analysis;
   }
-}
+  const analysisData = extractJson(analysisText);
 
-async function runComparison(analysis, subjectFile) {
-  const keywords = extractKeywords(analysis);
+  const keywords = analysisData.search_terms;
+
   new Notice("Finding related notes...");
-  const relatedNotes = await getRelatedNotes(keywords, subjectFile, app);
+  const relatedNotes = await getRelatedNotes(
+    keywords,
+    activeFile.basename,
+    app,
+  );
   if (relatedNotes.length === 0) {
     new Notice("No related notes found.");
-    await writeResults(analysis, null, subjectFile, app);
+    await writeReport(analysisText, activeFile.basename, "analysis", app);
     new Notice("✓ Reports Saved");
     return;
   }
-  new Notice(`Found ${relatedNotes.length} related notes for ${subjectFile}.`);
+  new Notice(
+    `Found ${relatedNotes.length} related notes for ${activeFile.basename}.`,
+  );
   const selectedNotes = await selectRelatedNotes(relatedNotes, app);
 
   if (selectedNotes.length === 0) {
@@ -54,7 +62,7 @@ async function runComparison(analysis, subjectFile) {
   new Notice(`Comparing against ${selectedNotes.length} notes...`);
 
   const comparisonResponse = await compareNotes(
-    analysis,
+    analysisText,
     comparisonInject,
     selectedNotes,
     app,
@@ -67,6 +75,6 @@ async function runComparison(analysis, subjectFile) {
   }
   new Notice("✓ Comparison complete");
 
-  await writeReport(comparisonResponse, subjectFile, reportType, app);
+  await writeReport(fileName, comparisonResponse, reportType, app);
   new Notice("✓ Reports Saved");
 }

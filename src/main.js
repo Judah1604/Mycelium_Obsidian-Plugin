@@ -2,6 +2,7 @@ import { Notice, Plugin, addIcon, PluginSettingTab, Setting } from "obsidian";
 import { compareNote } from "./comparison/compareNote.js";
 import { buildAnalysisCache } from "./commands/buildAnalysisCache.js";
 import { analyzeNote } from "./analysis/analyzeNote.js";
+import { selectAction } from "./helpers/selectAction.js";
 
 const DEFAULT_SETTINGS = {
   apiKey: "",
@@ -19,7 +20,17 @@ export default class Mycelium extends Plugin {
     );
 
     this.addRibbonIcon("mycelium-icon", "Mycelium", async () => {
-      await analyzeNote(this.app, this.settings.apiKey);
+      const action = await selectAction(this.app);
+      const activeFile = app.workspace.getActiveFile();
+      if (!action) return;
+
+      if (action === "analyze") {
+        await analyzeNote(this.app, this.settings.apiKey, activeFile);
+      } else if (action === "compare") {
+        await compareNote(this.app, this.settings.apiKey);
+      } else if (action === "buildcache") {
+        await buildAnalysisCache(this.app, this.settings.apiKey);
+      }
     });
 
     this.addCommand({

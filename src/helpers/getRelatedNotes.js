@@ -1,6 +1,7 @@
 export async function getRelatedNotes(keywords, subjectFile, app) {
+  const safeName = subjectFile.replace(".md", "").replace(/[<>:"/\\|?*]/g, "_");
   const files = app.vault.getMarkdownFiles().filter((file) => {
-    return file.name !== subjectFile && !file.path.includes('Mycelium/analyses/')
+    return !file.name.includes(safeName) && !file.path.includes(`Mycelium/`) && !file.path.includes(`Miscellaneous Files/`)
   });
   const results = [];
 

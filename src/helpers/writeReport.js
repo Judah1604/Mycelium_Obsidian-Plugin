@@ -5,7 +5,7 @@ export async function writeReport(subjectFile, report, reportType, app) {
   const backlink = `[[${subjectFile.replace(".md", "")}]]`;
   const data = extractJson(report);
   const analysisFolder = `Mycelium/${safeName}/analyses`;
-  const comparisonFolder = `Mycelium/${safeName}/comparison/`;
+  const comparisonFolder = `Mycelium/${safeName}/comparison`;
   let mdPath = "";
   let jsonPath = "";
 

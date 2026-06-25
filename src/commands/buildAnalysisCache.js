@@ -1,9 +1,12 @@
 import { analyzeNote } from "../analysis/analyzeNote.js";
+import { writeReport } from "../helpers/writeReport.js";
 
 export async function buildAnalysisCache(app, apiKey) {
+  const reportType = "analysis";
   const files = app.vault.getMarkdownFiles().filter((file) => {
     return (
-      file.name !== subjectFile && !file.path.includes("Mycelium/analyses/")
+      !file.path.includes(`Mycelium/`) &&
+      !file.path.includes(`Miscellaneous Files/`)
     );
   });
 
@@ -14,7 +17,7 @@ export async function buildAnalysisCache(app, apiKey) {
 
     if (exists) continue;
 
-    const { analysis, subjectFile } = await analyzeNote(app, apiKey, file);
-    await writeReport(comparisonResponse, subjectFile, reportType, app);
+    const { analysis, subjectNote } = await analyzeNote(app, apiKey, file);
+    await writeReport(subjectNote.name, analysis, reportType, app);
   }
 }
