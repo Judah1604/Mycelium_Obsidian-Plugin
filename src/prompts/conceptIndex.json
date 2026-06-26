@@ -1,0 +1,10 @@
+{
+  "Identity": {
+    "notes": ["The Self", "Love", "Memory"],
+    "canonicalTerms": ["selfhood", "continuity", "personal identity"]
+  },
+  "Time": {
+    "notes": ["Infinity", "Entropy"],
+    "canonicalTerms": ["temporality", "causality", "duration"]
+  }
+}

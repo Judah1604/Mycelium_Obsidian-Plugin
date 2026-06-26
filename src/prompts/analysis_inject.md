@@ -86,19 +86,27 @@ Format:
 ```json
 {
   "title": "<Exact Subject Note Filename>",
-  "hidden_assumptions": [
+  "primaryTheme": "<The dominant intellectual territory of this note>",
+  "secondaryThemes": [
+    "<Secondary theme>"
+  ],
+  "keyConcepts": [
+    "<Key concept>"
+  ],
+  "centralClaim": "<The core argument or position this note makes, in one sentence>",
+  "keyAssumptions": [
     "<Assumption>"
   ],
-  "weak_points": [
-    "<Weak point>"
-  ],
-  "unanswered_questions": [
+  "openQuestions": [
     "<Question>"
   ],
-  "adjacent_concepts": [
+  "weakPoints": [
+    "<Weak point>"
+  ],
+  "adjacentConcepts": [
     "<Concept>"
   ],
-  "search_terms": [
+  "searchTerms": [
     "<Search term>"
   ]
 }
@@ -106,16 +114,12 @@ Format:
 
 Requirements:
 
-* title must contain the exact filename from Subject Note Metadata.
-* hidden_assumptions must mirror the Hidden Assumptions section.
-* weak_points must mirror the Weak Points section.
-* unanswered_questions must mirror the Unanswered Questions section.
-* adjacent_concepts must mirror the Adjacent Concepts section.
-* search_terms must mirror the Related Note Search Terms section.
-* Use concise entries.
-* Preserve important terminology from the note whenever possible.
-* search_terms should be suitable for note retrieval and matching.
-* Prefer many specific observations over broad summaries.
-* The JSON must be valid JSON.
-* Append this JSON code block as the final section of the response.
-* Nothing should follow the closing ``` of the JSON block.
+* primaryTheme must name the dominant intellectual territory of the note as a single noun or noun phrase.
+* secondaryThemes must list supporting intellectual territories the note meaningfully engages with.
+* keyConcepts must list the specific terms, ideas, or constructs the note depends on.
+* centralClaim must capture the core argument of the note in one sentence. If the note makes no argument, leave it as an empty string.
+* keyAssumptions must mirror the Hidden Assumptions section.
+* openQuestions must mirror the Unanswered Questions section.
+* weakPoints must mirror the Weak Points section.
+* adjacentConcepts must mirror the Adjacent Concepts section.
+* searchTerms must mirror the Related Note Search Terms section.
