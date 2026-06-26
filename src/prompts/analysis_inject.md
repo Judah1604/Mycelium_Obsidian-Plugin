@@ -17,7 +17,10 @@ Analyze the provided note and return your response using the EXACT markdown stru
 # Subject Note Metadata
 Output the exact Subject Note name provided in the prompt.
 Format:
+
 Subject Note: Exact Filename
+Link to Subject Note: [[Exact Filename]]
+
 
 # Hidden Assumptions
 List assumptions the author appears to rely on but does not explicitly justify.

@@ -87,7 +87,6 @@ function extractJson(text) {
 // src/helpers/writeReport.js
 async function writeReport(subjectFile, report, reportType, app2) {
   const safeName = subjectFile.replace(".md", "").replace(/[<>:"/\\|?*]/g, "_");
-  const backlink = `[[${subjectFile.replace(".md", "")}]]`;
   const data = extractJson(report);
   const analysisFolder = `Mycelium/${safeName}/analyses`;
   const comparisonFolder = `Mycelium/${safeName}/comparison`;
@@ -103,10 +102,11 @@ async function writeReport(subjectFile, report, reportType, app2) {
     if (!await app2.vault.adapter.exists(comparisonFolder)) {
       await app2.vault.createFolder(comparisonFolder);
     }
-    mdPath = `${comparisonFolder}/${safeName}/${safeName}_comparison.md`;
-    jsonPath = `${comparisonFolder}/${safeName}/${safeName}_comparison.json`;
+    mdPath = `${comparisonFolder}/${safeName}_comparison.md`;
+    jsonPath = `${comparisonFolder}/${safeName}_comparison.json`;
   }
-  await app2.vault.adapter.write(mdPath, report);
+  const markdownOnly = report.replace(/\n```json\s*[\s\S]*?\s*```\s*$/i, "").trim();
+  await app2.vault.adapter.write(mdPath, markdownOnly);
   await app2.vault.adapter.write(jsonPath, JSON.stringify(data, null, 2));
 }
 
@@ -135,6 +135,7 @@ async function analyzeNote(app2, apiKey2, file) {
   const fileName = file.name;
   const fileContent = await app2.vault.adapter.read(file.name);
   const analysis = await getAnalysis(file, fileName, apiKey2, app2);
+  const data = extractJson(analysis);
   if (!analysis) {
     new Notice("Analysis failed.");
     return;
@@ -142,12 +143,12 @@ async function analyzeNote(app2, apiKey2, file) {
   new Notice(`\u2713 ${fileName} analysis complete`);
   await writeReport(fileName, analysis, reportType, app2);
   new Notice("\u2713 Report Saved");
-  return { analysis, file };
+  return { analysis, file, data };
 }
 
 // src/comparison/compareNotes.js
 async function compareNotes(analysis, comparisonInject, relatedNotes, app2, apiKey2) {
-  const subjectAnalysis = extractJson(analysis);
+  const conciseSubject = stripImportantData(analysis);
   if (relatedNotes.length === 0) {
     console.log("No related notes found.");
     return null;
@@ -158,25 +159,40 @@ async function compareNotes(analysis, comparisonInject, relatedNotes, app2, apiK
     const analysisPath = `Mycelium/${fileName}/analyses/${fileName}_analysis.json`;
     try {
       const analysisContent = await app2.vault.adapter.read(analysisPath);
+      const jsonAnalysis = extractJson(analysisContent);
+      const strippedRelatedNote = stripImportantData(jsonAnalysis);
       relatedAnalyses += `Related Note: ${note.file.name}
-${analysisContent}`;
+${strippedRelatedNote}`;
     } catch (error) {
       console.log(`Missing analysis for ${note.file.name}`);
-      const { analysis: noteAnalysis } = await analyzeNote(app2, apiKey2, note.file);
+      const { analysis: noteAnalysis } = await analyzeNote(
+        app2,
+        apiKey2,
+        note.file
+      );
       const jsonAnalysis = extractJson(noteAnalysis);
-      relatedAnalyses += jsonAnalysis;
+      const strippedRelatedNote = stripImportantData(jsonAnalysis);
+      relatedAnalyses += strippedRelatedNote;
     }
   }
-  console.log(JSON.stringify(relatedAnalyses, null, 2));
   const comparisonPrompt = `${comparisonInject} 
  Subject Analysis:
         
- ${JSON.stringify(subjectAnalysis, null, 2)}
+ ${JSON.stringify(conciseSubject, null, 2)}
 
         Related Analyses:
 
         ${JSON.stringify(relatedAnalyses, null, 2)}`;
-  return await askLLM(comparisonPrompt, apiKey2);
+  console.log("Prompt size:", comparisonPrompt.length, "characters");
+}
+function stripImportantData(analysisData) {
+  const distilledAnalysis = {
+    assumptions: analysisData.hidden_assumptions,
+    weakPoints: analysisData.weak_points,
+    questions: analysisData.unanswered_questions
+  };
+  const polished = JSON.stringify(distilledAnalysis);
+  return polished;
 }
 
 // src/ui/RelatedNotesModal.js
@@ -236,22 +252,21 @@ async function compareNote(app2, apiKey2) {
     return;
   }
   const fileName = activeFile.basename;
-  const analysisPath = `Mycelium/${fileName}/analyses/${fileName}_analysis.md`;
+  const analysisPath = `Mycelium/${fileName}/analyses/${fileName}_analysis.json`;
   const reportType = "comparison";
   const comparisonInject = await app2.vault.adapter.read(
     app2.vault.configDir + "/plugins/mycelium/src/prompts/comparison_inject.md"
   );
-  let analysisText = "";
+  let analysisData = "";
   const exists = await app2.vault.adapter.exists(analysisPath);
   if (exists) {
-    new import_obsidian2.Notice(`${fileName} analysis exists, using it now!`);
-    analysisText = await app2.vault.adapter.read(analysisPath);
+    new import_obsidian2.Notice(`${fileName} analysis exists, using it now!`, 5e3);
+    analysisData = JSON.parse(await app2.vault.adapter.read(analysisPath));
   } else {
-    new import_obsidian2.Notice(`${fileName} analysis doesnt exist, making one now!`);
-    const { analysis } = await analyzeNote(app2, apiKey2, activeFile);
-    analysisText = analysis;
+    new import_obsidian2.Notice(`${fileName} analysis doesnt exist, making one!`, 5e3);
+    const { data: analysisJson } = await analyzeNote(app2, apiKey2, activeFile);
+    analysisData = JSON.parse(analysisJson);
   }
-  const analysisData = extractJson(analysisText);
   const keywords = analysisData.search_terms;
   new import_obsidian2.Notice("Finding related notes...");
   const relatedNotes = await getRelatedNotes(
@@ -275,7 +290,7 @@ async function compareNote(app2, apiKey2) {
   }
   new import_obsidian2.Notice(`Comparing against ${selectedNotes.length} notes...`);
   const comparisonResponse = await compareNotes(
-    analysisText,
+    analysisData,
     comparisonInject,
     selectedNotes,
     app2,
@@ -304,7 +319,11 @@ async function buildAnalysisCache(app2, apiKey2) {
       notAnalyzed.push(file);
     }
   }
-  console.log(notAnalyzed);
+  notAnalyzed.forEach(async (file) => {
+    const { analysis, subjectNote } = await analyzeNote(app2, apiKey2, file);
+    await writeReport(subjectNote.name, analysis, reportType, app2);
+    console.log(`Analyzed ${file.basename} successfully!`);
+  });
 }
 
 // src/ui/ActionSelectModal.js

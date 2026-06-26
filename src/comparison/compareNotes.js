@@ -9,7 +9,7 @@ export async function compareNotes(
   app,
   apiKey,
 ) {
-  const subjectAnalysis = extractJson(analysis);
+  const conciseSubject = stripImportantData(analysis);
 
   if (relatedNotes.length === 0) {
     console.log("No related notes found.");
@@ -24,21 +24,39 @@ export async function compareNotes(
 
     try {
       const analysisContent = await app.vault.adapter.read(analysisPath);
+      const jsonAnalysis = extractJson(analysisContent);
+      const strippedRelatedNote = stripImportantData(jsonAnalysis);
 
-      relatedAnalyses += `Related Note: ${note.file.name}\n${analysisContent}`;
+      relatedAnalyses += `Related Note: ${note.file.name}\n${strippedRelatedNote}`;
     } catch (error) {
       console.log(`Missing analysis for ${note.file.name}`);
-      const { analysis: noteAnalysis } = await analyzeNote(app, apiKey, note.file);
-      const jsonAnalysis = extractJson(noteAnalysis)
-      relatedAnalyses += jsonAnalysis;
+      const { analysis: noteAnalysis } = await analyzeNote(
+        app,
+        apiKey,
+        note.file,
+      );
+      const jsonAnalysis = extractJson(noteAnalysis);
+      const strippedRelatedNote = stripImportantData(jsonAnalysis);
+      relatedAnalyses += strippedRelatedNote;
     }
   }
 
-  console.log(JSON.stringify(relatedAnalyses, null, 2))
-
   const comparisonPrompt = `${comparisonInject} \n Subject Analysis:
-        \n ${JSON.stringify(subjectAnalysis, null, 2)}\n
+        \n ${JSON.stringify(conciseSubject, null, 2)}\n
         Related Analyses:\n
         ${JSON.stringify(relatedAnalyses, null, 2)}`;
-  return await askLLM(comparisonPrompt, apiKey);
+  console.log("Prompt size:", comparisonPrompt.length, "characters");
+  // return await askLLM(comparisonPrompt, apiKey);
+}
+
+function stripImportantData(analysisData) {
+  const distilledAnalysis = {
+    assumptions: analysisData.hidden_assumptions,
+    weakPoints: analysisData.weak_points,
+    questions: analysisData.unanswered_questions,
+  };
+
+  const polished = JSON.stringify(distilledAnalysis);
+
+  return polished;
 }

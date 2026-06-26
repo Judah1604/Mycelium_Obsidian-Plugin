@@ -22,12 +22,10 @@ export async function buildAnalysisCache(app, apiKey) {
       notAnalyzed.push(file);
     }    
   }
-
-  console.log(notAnalyzed)
-
-  // notAnalyzed.forEach(async (file) => {
-  //   const { analysis, subjectNote } = await analyzeNote(app, apiKey, file);
-  //   await writeReport(subjectNote.name, analysis, reportType, app);
-  //   console.log(`Analyzed ${file.basename} successfully!`);
-  // })
+  
+  notAnalyzed.forEach(async (file) => {
+    const { analysis, subjectNote } = await analyzeNote(app, apiKey, file);
+    await writeReport(subjectNote.name, analysis, reportType, app);
+    console.log(`Analyzed ${file.basename} successfully!`);
+  })
 }

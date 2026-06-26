@@ -1,3 +1,4 @@
+import { extractJson } from "../helpers/extractJson";
 import { writeReport } from "../helpers/writeReport";
 import { getAnalysis } from "./getAnalysis";
 
@@ -13,6 +14,7 @@ export async function analyzeNote(app, apiKey, file) {
   const fileContent = await app.vault.adapter.read(file.name);
 
   const analysis = await getAnalysis(file, fileName, apiKey, app);
+  const data = extractJson(analysis)
 
   if (!analysis) {
     new Notice("Analysis failed.");
@@ -21,5 +23,5 @@ export async function analyzeNote(app, apiKey, file) {
   new Notice(`✓ ${fileName} analysis complete`);
   await writeReport(fileName, analysis, reportType, app);
   new Notice("✓ Report Saved");
-  return { analysis, file };
+  return { analysis, file, data };
 }

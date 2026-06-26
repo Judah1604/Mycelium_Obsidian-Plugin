@@ -17,24 +17,22 @@ export async function compareNote(app, apiKey) {
   }
 
   const fileName = activeFile.basename;
-  const analysisPath = `Mycelium/${fileName}/analyses/${fileName}_analysis.md`;
+  const analysisPath = `Mycelium/${fileName}/analyses/${fileName}_analysis.json`;
   const reportType = "comparison";
   const comparisonInject = await app.vault.adapter.read(
     app.vault.configDir + "/plugins/mycelium/src/prompts/comparison_inject.md",
   );
-  let analysisText = "";
+  let analysisData = "";
   const exists = await app.vault.adapter.exists(analysisPath);
 
   if (exists) {
-    new Notice(`${fileName} analysis exists, using it now!`);
-    analysisText = await app.vault.adapter.read(analysisPath);
+    new Notice(`${fileName} analysis exists, using it now!`, 5000);
+    analysisData = JSON.parse(await app.vault.adapter.read(analysisPath)) 
   } else {
-    new Notice(`${fileName} analysis doesnt exist, making one now!`);
-    const { analysis } = await analyzeNote(app, apiKey, activeFile);
-    analysisText = analysis;
+    new Notice(`${fileName} analysis doesnt exist, making one!`, 5000);
+    const { data: analysisJson } = await analyzeNote(app, apiKey, activeFile);
+    analysisData = JSON.parse(analysisJson);
   }
-  const analysisData = extractJson(analysisText);
-
   const keywords = analysisData.search_terms;
 
   new Notice("Finding related notes...");
@@ -62,7 +60,7 @@ export async function compareNote(app, apiKey) {
   new Notice(`Comparing against ${selectedNotes.length} notes...`);
 
   const comparisonResponse = await compareNotes(
-    analysisText,
+    analysisData,
     comparisonInject,
     selectedNotes,
     app,
